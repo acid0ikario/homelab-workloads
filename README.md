@@ -13,7 +13,7 @@ bootstrap/            # ArgoCD points here first (the "root" app)
   root-observability.yaml
   root-workloads.yaml
 apps/                 # (optional) per-app Application manifests
-infrastructure/       # ingress-nginx, cert-manager, istio, sealed-secrets, metallb
+infrastructure/       # ingress-nginx, cert-manager, sealed-secrets
 observability/        # kube-prometheus-stack, loki, promtail
 workloads/            # your actual apps (garmindashboard)
 ```
