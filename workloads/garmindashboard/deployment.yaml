@@ -17,8 +17,10 @@ spec:
       containers:
         - name: garmindashboard
           image: ghcr.io/acid0ikario/garmindashboard:latest  # CI bumps this tag via PR
+          # NOTE: until the first CI build pushes a real image, this points at a
+          # placeholder below via the kustomization images: override.
           ports:
-            - containerPort: 8080
+            - containerPort: 80
           resources:
             requests:
               cpu: 50m
