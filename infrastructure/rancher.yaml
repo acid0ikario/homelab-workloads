@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: rancher
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://releases.rancher.com/server-charts/stable
+    chart: rancher
+    targetRevision: 2.9.3
+    helm:
+      values: |
+        # Public hostname served via Tailscale Funnel on port 8443:
+        #   https://homelab-cluster.tail333811.ts.net:8443
+        hostname: homelab-cluster.tail333811.ts.net
+        # Single replica for a homelab (default is 3).
+        replicas: 1
+        # Rancher terminates its own TLS (self-signed). Tailscale Funnel handles
+        # the public-facing valid cert; the funnel proxies to Rancher over https.
+        tls: external
+        # Known initial admin password (change it after first login!).
+        bootstrapPassword: "homelab-rancher-admin"
+        # Keep resource use modest for k3d.
+        antiAffinity: preferred
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cattle-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
