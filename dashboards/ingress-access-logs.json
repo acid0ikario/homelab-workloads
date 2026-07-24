@@ -3,7 +3,6 @@
   "editable": true,
   "graphTooltip": 0,
   "time": { "from": "now-1h", "to": "now" },
-  "timepicker": {},
   "refresh": "30s",
   "schemaVersion": 39,
   "tags": ["ingress", "logs", "homelab"],
@@ -14,9 +13,9 @@
       {
         "name": "host",
         "type": "textbox",
-        "label": "Host filter (blank = all)",
+        "label": "Host filter (regex, blank = all)",
         "query": "",
-        "current": { "text": "", "value": "" }
+        "current": { "text": ".+", "value": ".+" }
       }
     ]
   },
@@ -28,11 +27,7 @@
       "gridPos": { "h": 7, "w": 12, "x": 0, "y": 0 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
-        {
-          "refId": "A",
-          "expr": "sum(rate({namespace=\"ingress-nginx\"} |= \"$host\" [1m]))",
-          "datasource": { "type": "loki", "uid": "loki" }
-        }
+        { "refId": "A", "expr": "sum(rate({namespace=\"ingress-nginx\", host=~\"$host\"}[1m]))", "legendFormat": "req/s", "datasource": { "type": "loki", "uid": "loki" } }
       ],
       "fieldConfig": { "defaults": { "unit": "reqps" }, "overrides": [] }
     },
@@ -43,12 +38,7 @@
       "gridPos": { "h": 7, "w": 12, "x": 12, "y": 0 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
-        {
-          "refId": "A",
-          "expr": "sum by (status) (rate({namespace=\"ingress-nginx\"} |= \"$host\" | pattern `<_> - - <_> \"<method> <path> <_>\" <status> <_>` [1m]))",
-          "legendFormat": "{{status}}",
-          "datasource": { "type": "loki", "uid": "loki" }
-        }
+        { "refId": "A", "expr": "sum by (status) (rate({namespace=\"ingress-nginx\", host=~\"$host\"}[1m]))", "legendFormat": "{{status}}", "datasource": { "type": "loki", "uid": "loki" } }
       ],
       "fieldConfig": { "defaults": { "unit": "reqps" }, "overrides": [] }
     },
@@ -59,12 +49,7 @@
       "gridPos": { "h": 6, "w": 8, "x": 0, "y": 7 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
-        {
-          "refId": "A",
-          "expr": "sum(rate({namespace=\"ingress-nginx\"} |= \"$host\" | pattern `<_> - - <_> \"<method> <path> <_>\" <status> <_>` | status =~ \"5..\" [1m]))",
-          "legendFormat": "5xx",
-          "datasource": { "type": "loki", "uid": "loki" }
-        }
+        { "refId": "A", "expr": "sum(rate({namespace=\"ingress-nginx\", host=~\"$host\", status=~\"5..\"}[1m]))", "legendFormat": "5xx", "datasource": { "type": "loki", "uid": "loki" } }
       ],
       "fieldConfig": { "defaults": { "unit": "reqps", "color": { "mode": "fixed", "fixedColor": "red" } }, "overrides": [] }
     },
@@ -75,12 +60,7 @@
       "gridPos": { "h": 6, "w": 8, "x": 8, "y": 7 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
-        {
-          "refId": "A",
-          "expr": "sum(rate({namespace=\"ingress-nginx\"} |= \"$host\" | pattern `<_> - - <_> \"<method> <path> <_>\" <status> <_>` | status =~ \"4..\" [1m]))",
-          "legendFormat": "4xx",
-          "datasource": { "type": "loki", "uid": "loki" }
-        }
+        { "refId": "A", "expr": "sum(rate({namespace=\"ingress-nginx\", host=~\"$host\", status=~\"4..\"}[1m]))", "legendFormat": "4xx", "datasource": { "type": "loki", "uid": "loki" } }
       ],
       "fieldConfig": { "defaults": { "unit": "reqps", "color": { "mode": "fixed", "fixedColor": "orange" } }, "overrides": [] }
     },
@@ -91,28 +71,18 @@
       "gridPos": { "h": 6, "w": 8, "x": 16, "y": 7 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
-        {
-          "refId": "A",
-          "expr": "sum(count_over_time({namespace=\"ingress-nginx\"} |= \"$host\" [$__range]))",
-          "datasource": { "type": "loki", "uid": "loki" }
-        }
+        { "refId": "A", "expr": "sum(count_over_time({namespace=\"ingress-nginx\", host=~\"$host\"}[$__range]))", "datasource": { "type": "loki", "uid": "loki" } }
       ],
       "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "fixed", "fixedColor": "green" } }, "overrides": [] }
     },
     {
       "id": 6,
-      "title": "Top request paths",
-      "type": "table",
+      "title": "Requests by method",
+      "type": "piechart",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 13 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
-        {
-          "refId": "A",
-          "expr": "topk(10, sum by (path) (count_over_time({namespace=\"ingress-nginx\"} |= \"$host\" | pattern `<_> - - <_> \"<method> <path> <_>\" <status> <_>` [$__range])))",
-          "instant": true,
-          "format": "table",
-          "datasource": { "type": "loki", "uid": "loki" }
-        }
+        { "refId": "A", "expr": "sum by (method) (count_over_time({namespace=\"ingress-nginx\", host=~\"$host\"}[$__range]))", "legendFormat": "{{method}}", "instant": true, "datasource": { "type": "loki", "uid": "loki" } }
       ]
     },
     {
@@ -123,11 +93,7 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "options": { "showTime": true, "wrapLogMessage": true, "sortOrder": "Descending" },
       "targets": [
-        {
-          "refId": "A",
-          "expr": "{namespace=\"ingress-nginx\"} |= \"$host\"",
-          "datasource": { "type": "loki", "uid": "loki" }
-        }
+        { "refId": "A", "expr": "{namespace=\"ingress-nginx\", host=~\"$host\"} | json | line_format \"{{.remote_addr}} {{.method}} {{.path}} -> {{.status}}\"", "datasource": { "type": "loki", "uid": "loki" } }
       ]
     }
   ]
