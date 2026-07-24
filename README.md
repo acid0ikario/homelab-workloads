@@ -15,6 +15,7 @@ bootstrap/            # ArgoCD points here first (the "root" app)
 apps/                 # (optional) per-app Application manifests
 infrastructure/       # ingress-nginx, cert-manager, sealed-secrets
 observability/        # kube-prometheus-stack, loki, promtail
+ingress/              # Ingress resources (*.homelab.local)
 workloads/            # your actual apps (garmindashboard)
 ```
 
