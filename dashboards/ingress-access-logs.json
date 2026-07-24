@@ -1,0 +1,134 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "graphTooltip": 0,
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": ["ingress", "logs", "homelab"],
+  "title": "Ingress NGINX — Access Logs",
+  "uid": "ingress-access-logs",
+  "templating": {
+    "list": [
+      {
+        "name": "host",
+        "type": "textbox",
+        "label": "Host filter (blank = all)",
+        "query": "",
+        "current": { "text": "", "value": "" }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Requests / sec",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate({namespace=\"ingress-nginx\"} |= \"$host\" [1m]))",
+          "datasource": { "type": "loki", "uid": "loki" }
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "reqps" }, "overrides": [] }
+    },
+    {
+      "id": 2,
+      "title": "Requests by status code",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 0 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (status) (rate({namespace=\"ingress-nginx\"} |= \"$host\" | pattern `<_> - - <_> \"<method> <path> <_>\" <status> <_>` [1m]))",
+          "legendFormat": "{{status}}",
+          "datasource": { "type": "loki", "uid": "loki" }
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "reqps" }, "overrides": [] }
+    },
+    {
+      "id": 3,
+      "title": "5xx errors / sec",
+      "type": "timeseries",
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 7 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate({namespace=\"ingress-nginx\"} |= \"$host\" | pattern `<_> - - <_> \"<method> <path> <_>\" <status> <_>` | status =~ \"5..\" [1m]))",
+          "legendFormat": "5xx",
+          "datasource": { "type": "loki", "uid": "loki" }
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "reqps", "color": { "mode": "fixed", "fixedColor": "red" } }, "overrides": [] }
+    },
+    {
+      "id": 4,
+      "title": "4xx errors / sec",
+      "type": "timeseries",
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 7 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate({namespace=\"ingress-nginx\"} |= \"$host\" | pattern `<_> - - <_> \"<method> <path> <_>\" <status> <_>` | status =~ \"4..\" [1m]))",
+          "legendFormat": "4xx",
+          "datasource": { "type": "loki", "uid": "loki" }
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "reqps", "color": { "mode": "fixed", "fixedColor": "orange" } }, "overrides": [] }
+    },
+    {
+      "id": 5,
+      "title": "Total requests (window)",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 7 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(count_over_time({namespace=\"ingress-nginx\"} |= \"$host\" [$__range]))",
+          "datasource": { "type": "loki", "uid": "loki" }
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "fixed", "fixedColor": "green" } }, "overrides": [] }
+    },
+    {
+      "id": 6,
+      "title": "Top request paths",
+      "type": "table",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 13 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "topk(10, sum by (path) (count_over_time({namespace=\"ingress-nginx\"} |= \"$host\" | pattern `<_> - - <_> \"<method> <path> <_>\" <status> <_>` [$__range])))",
+          "instant": true,
+          "format": "table",
+          "datasource": { "type": "loki", "uid": "loki" }
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Live access log",
+      "type": "logs",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 13 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "options": { "showTime": true, "wrapLogMessage": true, "sortOrder": "Descending" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "{namespace=\"ingress-nginx\"} |= \"$host\"",
+          "datasource": { "type": "loki", "uid": "loki" }
+        }
+      ]
+    }
+  ]
+}
