@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: https://releases.rancher.com/server-charts/stable
     chart: rancher
-    targetRevision: 2.9.3
+    targetRevision: 2.11.3
     helm:
       values: |
         # Public hostname served via Tailscale Funnel on port 8443:
