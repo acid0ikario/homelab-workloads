@@ -13,6 +13,12 @@ spec:
       values: |
         loki:
           enabled: true
+          # Prometheus (from kube-prometheus-stack) is already the org default
+          # datasource. Grafana refuses to provision a second default, which
+          # silently dropped the Loki datasource. Keep Loki non-default.
+          isDefault: false
+          datasource:
+            uid: loki
         promtail:
           enabled: true
         grafana:
