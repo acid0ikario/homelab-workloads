@@ -11,16 +11,18 @@ spec:
     targetRevision: 0.57.9
     helm:
       values: |
-        # k3d nodes have no /etc/machine-id file — drop the default hostPath mounts
-        # that assume it, otherwise pods hang in ContainerCreating (FailedMount).
-        volumes:
+        # k3d nodes have no /etc/machine-id file — override daemonSetVolumes to
+        # drop the default etcmachineid mount, otherwise pods hang in
+        # ContainerCreating (FailedMount). Note: the DaemonSet uses
+        # daemonSetVolumes/daemonSetVolumeMounts, NOT volumes/volumeMounts.
+        daemonSetVolumes:
           - name: varlog
             hostPath:
               path: /var/log
           - name: varlibdockercontainers
             hostPath:
               path: /var/lib/docker/containers
-        volumeMounts:
+        daemonSetVolumeMounts:
           - name: varlog
             mountPath: /var/log
             readOnly: true
