@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: garmindashboard
+  name: webpixel
 spec:
   selector:
-    app: garmindashboard
+    app: webpixel
   ports:
     - port: 80
       targetPort: 80

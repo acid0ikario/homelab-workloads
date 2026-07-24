@@ -1,18 +1,18 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: garmindashboard
+  name: webpixel
   namespace: workloads
 spec:
   ingressClassName: nginx
   rules:
-    - host: garmindashboard.homelab.local
+    - host: webpixel.homelab.local
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: garmindashboard
+                name: webpixel
                 port:
                   number: 80

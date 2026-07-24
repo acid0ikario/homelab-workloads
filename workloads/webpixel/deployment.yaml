@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webpixel
+  labels:
+    app: webpixel
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: webpixel
+  template:
+    metadata:
+      labels:
+        app: webpixel
+    spec:
+      containers:
+        - name: webpixel
+          image: ghcr.io/acid0ikario/webpixel:latest  # CI bumps this tag via PR
+          ports:
+            - containerPort: 80
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 80
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi

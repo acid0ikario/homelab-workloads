@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: workloads
+resources:
+  - namespace.yaml
+  - deployment.yaml
+  - service.yaml
+
+# CI opens a PR that updates newTag with the new immutable SHA tag.
+images:
+  - name: ghcr.io/acid0ikario/webpixel
+    newTag: latest
