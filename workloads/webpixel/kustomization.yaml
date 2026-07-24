@@ -9,4 +9,4 @@ resources:
 # CI opens a PR that updates newTag with the new immutable SHA tag.
 images:
   - name: ghcr.io/acid0ikario/webpixel
-    newTag: latest
+    newTag: sha-a9aefd1
