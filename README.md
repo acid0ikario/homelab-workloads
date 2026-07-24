@@ -16,7 +16,7 @@ apps/                 # (optional) per-app Application manifests
 infrastructure/       # ingress-nginx, cert-manager, sealed-secrets
 observability/        # kube-prometheus-stack, loki, promtail
 ingress/              # Ingress resources (*.homelab.local)
-workloads/            # your actual apps (garmindashboard)
+workloads/            # your actual apps (webpixel)
 ```
 
 ArgoCD is bootstrapped by [homelab-cluster](https://github.com/acid0ikario/homelab-cluster)
