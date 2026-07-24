@@ -15,7 +15,7 @@ bootstrap/            # ArgoCD points here first (the "root" app)
 apps/                 # (optional) per-app Application manifests
 infrastructure/       # ingress-nginx, cert-manager, istio, sealed-secrets, metallb
 observability/        # kube-prometheus-stack, loki, promtail
-workloads/            # your actual apps (garmindashboard, postgrest, bots, ...)
+workloads/            # your actual apps (garmindashboard)
 ```
 
 ArgoCD is bootstrapped by [homelab-cluster](https://github.com/acid0ikario/homelab-cluster)
