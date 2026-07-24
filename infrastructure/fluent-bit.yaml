@@ -1,0 +1,125 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: fluent-bit
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://fluent.github.io/helm-charts
+    chart: fluent-bit
+    targetRevision: 0.57.9
+    helm:
+      values: |
+        # Lua script that enriches each ingress access-log record with derived
+        # browser / os / device fields from the user_agent string.
+        luaScripts:
+          enrich.lua: |
+            function enrich(tag, timestamp, record)
+              local ua = record["user_agent"] or ""
+              -- browser
+              local browser = "Other"
+              if string.find(ua, "Edg/") then browser = "Edge"
+              elseif string.find(ua, "OPR/") or string.find(ua, "Opera") then browser = "Opera"
+              elseif string.find(ua, "Chrome") then browser = "Chrome"
+              elseif string.find(ua, "Firefox") then browser = "Firefox"
+              elseif string.find(ua, "Safari") then browser = "Safari"
+              elseif string.find(ua, "curl") then browser = "curl"
+              elseif string.find(ua, "bot") or string.find(ua, "Bot") or string.find(ua, "spider") then browser = "Bot"
+              end
+              record["browser"] = browser
+              -- os
+              local os_name = "Other"
+              if string.find(ua, "iPhone") or string.find(ua, "iPad") then os_name = "iOS"
+              elseif string.find(ua, "Android") then os_name = "Android"
+              elseif string.find(ua, "Windows") then os_name = "Windows"
+              elseif string.find(ua, "Mac OS") then os_name = "macOS"
+              elseif string.find(ua, "Linux") then os_name = "Linux"
+              end
+              record["os"] = os_name
+              -- device type
+              local device = "Desktop"
+              if string.find(ua, "Mobile") or string.find(ua, "iPhone") or string.find(ua, "Android") then device = "Mobile"
+              elseif string.find(ua, "iPad") or string.find(ua, "Tablet") then device = "Tablet"
+              end
+              record["device"] = device
+              -- source (public via funnel vs local)
+              if record["tailscale_funnel"] == "?1" then
+                record["source"] = "public"
+              else
+                record["source"] = "local"
+              end
+              return 2, timestamp, record
+            end
+
+        config:
+          service: |
+            [SERVICE]
+                Daemon Off
+                Flush 5
+                Log_Level info
+                Parsers_File /fluent-bit/etc/parsers.conf
+                Parsers_File /fluent-bit/etc/conf/custom_parsers.conf
+                HTTP_Server On
+                HTTP_Listen 0.0.0.0
+                HTTP_Port 2020
+                Health_Check On
+
+          inputs: |
+            [INPUT]
+                Name tail
+                Tag kube.*
+                Path /var/log/containers/*.log
+                multiline.parser docker, cri
+                Mem_Buf_Limit 50MB
+                Skip_Long_Lines On
+
+          filters: |
+            [FILTER]
+                Name kubernetes
+                Match kube.*
+                Merge_Log On
+                Keep_Log Off
+                K8S-Logging.Parser On
+                K8S-Logging.Exclude On
+                Labels On
+            # Parse the ingress access log body (JSON) into top-level fields.
+            [FILTER]
+                Name parser
+                Match kube.*
+                Key_Name log
+                Parser ingress_json
+                Reserve_Data On
+            # Only enrich records that actually have a user_agent (ingress access logs).
+            [FILTER]
+                Name lua
+                Match kube.*
+                script /fluent-bit/scripts/enrich.lua
+                call enrich
+
+          customParsers: |
+            [PARSER]
+                Name ingress_json
+                Format json
+                Time_Key time
+                Time_Format %Y-%m-%dT%H:%M:%S%z
+
+          outputs: |
+            [OUTPUT]
+                Name loki
+                Match kube.*
+                Host loki.observability.svc.cluster.local
+                Port 3100
+                Labels job=fluentbit, namespace=$kubernetes['namespace_name'], pod=$kubernetes['pod_name'], container=$kubernetes['container_name']
+                Label_Keys $browser,$os,$device,$source,$status,$host,$method
+                Auto_Kubernetes_Labels Off
+                Line_Format json
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: observability
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

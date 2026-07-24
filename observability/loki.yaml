@@ -20,7 +20,7 @@ spec:
           datasource:
             uid: loki
         promtail:
-          enabled: true
+          enabled: false   # replaced by Fluent Bit (see infrastructure/fluent-bit.yaml)
         grafana:
           enabled: false   # Grafana comes from kube-prometheus-stack
   destination:
