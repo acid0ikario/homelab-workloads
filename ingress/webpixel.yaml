@@ -6,7 +6,19 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
+    # Local access via *.homelab.local
     - host: webpixel.homelab.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: webpixel
+                port:
+                  number: 80
+    # Public access via Tailscale Funnel (permanent hostname)
+    - host: homelab-cluster.tail333811.ts.net
       http:
         paths:
           - path: /
