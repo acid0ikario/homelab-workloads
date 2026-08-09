@@ -1,0 +1,139 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: garmin-analytics-collector
+spec:
+  podSelector:
+    matchLabels: {app.kubernetes.io/name: garmin-analytics-collector}
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - podSelector: {}
+      ports:
+        - {protocol: TCP, port: 2020}
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels: {kubernetes.io/metadata.name: kube-system}
+      ports:
+        - {protocol: UDP, port: 53}
+        - {protocol: TCP, port: 53}
+    - to:
+        - ipBlock: {cidr: 0.0.0.0/0}
+      ports:
+        - {protocol: TCP, port: 443}
+    - to:
+        - podSelector:
+            matchLabels: {app.kubernetes.io/name: garmin-logstash}
+      ports:
+        - {protocol: TCP, port: 5044}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: garmin-logstash
+spec:
+  podSelector:
+    matchLabels: {app.kubernetes.io/name: garmin-logstash}
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels: {app.kubernetes.io/name: garmin-analytics-collector}
+      ports:
+        - {protocol: TCP, port: 5044}
+    - from:
+        - podSelector: {}
+      ports:
+        - {protocol: TCP, port: 9600}
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels: {kubernetes.io/metadata.name: kube-system}
+      ports:
+        - {protocol: UDP, port: 53}
+        - {protocol: TCP, port: 53}
+    - to:
+        - podSelector:
+            matchLabels: {app.kubernetes.io/name: garmin-elasticsearch}
+      ports:
+        - {protocol: TCP, port: 9200}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: garmin-elasticsearch
+spec:
+  podSelector:
+    matchLabels: {app.kubernetes.io/name: garmin-elasticsearch}
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels: {app.kubernetes.io/name: garmin-logstash}
+        - podSelector:
+            matchLabels: {app.kubernetes.io/name: garmin-kibana}
+        - podSelector:
+            matchLabels: {app.kubernetes.io/name: garmin-provision}
+      ports:
+        - {protocol: TCP, port: 9200}
+  egress: []
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: garmin-kibana
+spec:
+  podSelector:
+    matchLabels: {app.kubernetes.io/name: garmin-kibana}
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels: {kubernetes.io/metadata.name: ingress-nginx}
+      ports:
+        - {protocol: TCP, port: 5601}
+    - from:
+        - podSelector:
+            matchLabels: {app.kubernetes.io/name: garmin-provision}
+      ports:
+        - {protocol: TCP, port: 5601}
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels: {kubernetes.io/metadata.name: kube-system}
+      ports:
+        - {protocol: UDP, port: 53}
+        - {protocol: TCP, port: 53}
+    - to:
+        - podSelector:
+            matchLabels: {app.kubernetes.io/name: garmin-elasticsearch}
+      ports:
+        - {protocol: TCP, port: 9200}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: garmin-provision
+spec:
+  podSelector:
+    matchLabels: {app.kubernetes.io/name: garmin-provision}
+  policyTypes: [Ingress, Egress]
+  ingress: []
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels: {kubernetes.io/metadata.name: kube-system}
+      ports:
+        - {protocol: UDP, port: 53}
+        - {protocol: TCP, port: 53}
+    - to:
+        - podSelector:
+            matchLabels: {app.kubernetes.io/name: garmin-elasticsearch}
+      ports:
+        - {protocol: TCP, port: 9200}
+    - to:
+        - podSelector:
+            matchLabels: {app.kubernetes.io/name: garmin-kibana}
+      ports:
+        - {protocol: TCP, port: 5601}

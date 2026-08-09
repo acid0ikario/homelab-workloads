@@ -1,0 +1,54 @@
+{
+  "index_patterns": ["garmin-*"],
+  "priority": 500,
+  "template": {
+    "settings": {
+      "number_of_shards": 1,
+      "number_of_replicas": 0,
+      "index.refresh_interval": "10s",
+      "index.mapping.total_fields.limit": 1500
+    },
+    "mappings": {
+      "dynamic": true,
+      "date_detection": false,
+      "properties": {
+        "@timestamp": {"type": "date"},
+        "schema_version": {"type": "integer"},
+        "event": {"properties": {
+          "dataset": {"type": "keyword"},
+          "kind": {"type": "keyword"},
+          "action": {"type": "keyword"}
+        }},
+        "observer": {"properties": {"type": {"type": "keyword"}}},
+        "error": {"properties": {
+          "type": {"type": "keyword"},
+          "message": {"type": "match_only_text"}
+        }},
+        "garmin": {"properties": {
+          "date": {"type": "date", "format": "strict_date"},
+          "start_local": {"type": "date", "format": "yyyy-MM-dd'T'HH:mm:ss||yyyy-MM-dd HH:mm:ss"},
+          "earned_date": {"type": "date", "format": "strict_date_optional_time"},
+          "first_date": {"type": "date", "format": "strict_date"},
+          "last_date": {"type": "date", "format": "strict_date"},
+          "t": {"type": "date", "format": "epoch_millis"},
+          "start_ms": {"type": "date", "format": "epoch_millis"},
+          "end_ms": {"type": "date", "format": "epoch_millis"},
+          "activity_id": {"type": "long"},
+          "badge_id": {"type": "long"},
+          "type_id": {"type": "long"},
+          "parent_type_id": {"type": "long"},
+          "fields": {"type": "keyword", "index": false, "doc_values": false}
+        }},
+        "tags": {"type": "keyword"}
+      },
+      "dynamic_templates": [
+        {"garmin_strings": {"path_match": "garmin.*", "match_mapping_type": "string", "mapping": {"type": "keyword", "ignore_above": 1024}}},
+        {"other_strings": {"match_mapping_type": "string", "mapping": {"type": "keyword", "ignore_above": 1024}}}
+      ]
+    }
+  },
+  "_meta": {
+    "description": "Garmin analytics v1; retention is indefinite until an explicit ILM policy is attached",
+    "schema_version": 1
+  }
+}

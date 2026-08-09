@@ -3,3 +3,4 @@ kind: Kustomization
 resources:
   - webpixel
   - garmin-health-dashboard
+  - garmin-analytics

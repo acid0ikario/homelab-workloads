@@ -1,0 +1,31 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: garmin-health-dashboard
+resources:
+  - storage.yaml
+  - collector.yaml
+  - elasticsearch.yaml
+  - logstash.yaml
+  - kibana.yaml
+  - ingress.yaml
+  - networkpolicies.yaml
+  - provision-job.yaml
+configMapGenerator:
+  - name: garmin-fluent-bit
+    files:
+      - configs/fluent-bit.conf
+      - configs/parsers.conf
+  - name: garmin-logstash
+    files:
+      - configs/logstash.yml
+      - configs/pipelines.yml
+      - pipeline.conf=configs/logstash-pipeline.conf
+  - name: garmin-provisioning
+    files:
+      - index-template.json=provisioning/index-template.json
+      - kibana-dashboards.ndjson=provisioning/kibana-dashboards.ndjson
+      - provision.sh=provisioning/provision.sh
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: garmin-analytics
+    includeTemplates: true

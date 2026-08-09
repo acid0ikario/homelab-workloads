@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: garmin-logstash
+spec:
+  replicas: 1
+  strategy: {type: Recreate}
+  selector:
+    matchLabels: {app.kubernetes.io/name: garmin-logstash}
+  template:
+    metadata:
+      labels: {app.kubernetes.io/name: garmin-logstash}
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 90
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: logstash
+          image: docker.elastic.co/logstash/logstash:9.4.2
+          env:
+            - {name: LS_JAVA_OPTS, value: "-Xms384m -Xmx384m"}
+          ports:
+            - {name: ingest, containerPort: 5044}
+            - {name: metrics, containerPort: 9600}
+          volumeMounts:
+            - name: config
+              mountPath: /usr/share/logstash/config/logstash.yml
+              subPath: logstash.yml
+              readOnly: true
+            - name: config
+              mountPath: /usr/share/logstash/config/pipelines.yml
+              subPath: pipelines.yml
+              readOnly: true
+            - {name: pipeline, mountPath: /usr/share/logstash/pipeline, readOnly: true}
+            - {name: queue, mountPath: /usr/share/logstash/data}
+            - {name: tmp, mountPath: /tmp}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+          startupProbe:
+            httpGet: {path: /_node/pipelines, port: metrics}
+            periodSeconds: 10
+            failureThreshold: 45
+          readinessProbe:
+            httpGet: {path: /_node/pipelines, port: metrics}
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket: {port: metrics}
+            periodSeconds: 30
+          resources:
+            requests: {cpu: 100m, memory: 640Mi}
+            limits: {cpu: "1", memory: 1Gi}
+      volumes:
+        - name: config
+          configMap: {name: garmin-logstash}
+        - name: pipeline
+          configMap:
+            name: garmin-logstash
+            items:
+              - {key: pipeline.conf, path: pipeline.conf}
+        - name: queue
+          persistentVolumeClaim: {claimName: garmin-logstash-queue}
+        - name: tmp
+          emptyDir: {sizeLimit: 128Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: garmin-logstash
+spec:
+  selector: {app.kubernetes.io/name: garmin-logstash}
+  ports:
+    - {name: ingest, port: 5044, targetPort: ingest}
+    - {name: metrics, port: 9600, targetPort: metrics}

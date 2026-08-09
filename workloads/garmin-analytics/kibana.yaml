@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: garmin-kibana
+spec:
+  replicas: 1
+  strategy: {type: Recreate}
+  selector:
+    matchLabels: {app.kubernetes.io/name: garmin-kibana}
+  template:
+    metadata:
+      labels: {app.kubernetes.io/name: garmin-kibana}
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: kibana
+          image: docker.elastic.co/kibana/kibana:9.4.2
+          env:
+            - {name: ELASTICSEARCH_HOSTS, value: "http://garmin-elasticsearch:9200"}
+            - {name: SERVER_HOST, value: "0.0.0.0"}
+            - {name: SERVER_PUBLICBASEURL, value: "http://kibana-garmin.homelab.local"}
+            - {name: TELEMETRY_ENABLED, value: "false"}
+            - {name: XPACK_TELEMETRY_ENABLED, value: "false"}
+            - {name: NODE_OPTIONS, value: "--max-old-space-size=640"}
+          ports:
+            - {name: http, containerPort: 5601}
+          volumeMounts:
+            - {name: tmp, mountPath: /tmp}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+          startupProbe:
+            httpGet: {path: /api/status, port: http}
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: {path: /api/status, port: http}
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            tcpSocket: {port: http}
+            periodSeconds: 30
+          resources:
+            requests: {cpu: 100m, memory: 640Mi}
+            limits: {cpu: "1", memory: 1Gi}
+      volumes:
+        - name: tmp
+          emptyDir: {sizeLimit: 256Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: garmin-kibana
+spec:
+  selector: {app.kubernetes.io/name: garmin-kibana}
+  ports:
+    - {name: http, port: 5601, targetPort: http}
