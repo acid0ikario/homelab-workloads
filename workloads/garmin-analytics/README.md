@@ -37,6 +37,8 @@ Presupuesto aproximado de requests: 0.5 CPU y ~2.95 GiB RAM; límites ~4.9 GiB. 
 
 Los tamaños (spool 2 GiB, buffer Fluent Bit 2 GiB, PQ/DLQ 2 GiB y Elasticsearch 10 GiB) son garantías finitas, no entrega infinita. Se quitó el límite de almacenamiento de Fluent Bit que podía desalojar chunks; ante una caída prolongada la contrapresión conserva datos hasta agotar disco y después el productor puede fallar. Monitorice uso, backlog y errores, y migre de forma controlada antes de ese punto. La PQ máxima de 1 GiB más DLQ de 128 MiB deja margen suficiente para checkpoints y filesystem en su PVC de 2 GiB.
 
+La PQ crea un checkpoint cada 1024 escrituras para evitar un `fsync` por evento durante backfills. Una caída puede obligar a Fluent Bit a reenviar la ventana no confirmada; los IDs estables y las operaciones `index`/`delete` hacen ese replay idempotente, mientras spool y buffer continúan siendo durables.
+
 ## Contrato pendiente con la imagen de aplicación
 
 La configuración consume segmentos fuente inmutables `/data/analytics/spool/garmin-*.ndjson`. La imagen escribe cada lote en un nombre temporal, hace `fsync`, lo cierra y lo renombra a ese patrón; nunca vuelve a modificar un segmento visible.

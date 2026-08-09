@@ -4,7 +4,7 @@ log.level: info
 config.reload.automatic: false
 queue.type: persisted
 queue.max_bytes: 1gb
-queue.checkpoint.writes: 1
+queue.checkpoint.writes: 1024
 queue.drain: true
 dead_letter_queue.enable: true
 dead_letter_queue.max_bytes: 128mb

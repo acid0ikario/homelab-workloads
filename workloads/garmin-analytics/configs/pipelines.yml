@@ -1,6 +1,6 @@
 - pipeline.id: garmin
   path.config: /usr/share/logstash/pipeline/pipeline.conf
   pipeline.workers: 1
-  pipeline.batch.size: 64
+  pipeline.batch.size: 256
   pipeline.batch.delay: 50
   queue.type: persisted
