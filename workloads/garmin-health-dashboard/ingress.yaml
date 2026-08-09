@@ -1,0 +1,20 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: garmin-health-dashboard
+  namespace: garmin-health-dashboard
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: 1m
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: garmin.homelab.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: garmin-health-dashboard
+                port:
+                  name: http

@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: garmin-health-dashboard
+  namespace: garmin-health-dashboard
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: garmin-health-dashboard
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: garmin-health-dashboard
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: dashboard
+          image: garmin-health-dashboard:local-20260808-1
+          imagePullPolicy: Never
+          ports:
+            - name: http
+              containerPort: 8000
+          env:
+            - name: GARMIN_DATA_DIR
+              value: /data
+            - name: GARMIN_TOKEN_SECRET_DIR
+              value: /secrets/garmin
+            - name: GARMIN_REFRESH_WINDOW_DAYS
+              value: "3"
+            - name: GARMIN_MAX_DAYS_PER_RUN
+              value: "400"
+            - name: GARMIN_MAX_NEW_FIT_PER_RUN
+              value: "25"
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: tokens
+              mountPath: /secrets/garmin
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 2
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 20
+            timeoutSeconds: 3
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: "1"
+              memory: 768Mi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: garmin-data
+        - name: tokens
+          secret:
+            secretName: garmin-tokens
+            defaultMode: 0400
+        - name: tmp
+          emptyDir: {}
