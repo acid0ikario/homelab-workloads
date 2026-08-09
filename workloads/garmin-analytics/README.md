@@ -41,6 +41,6 @@ La PQ crea un checkpoint cada 1024 escrituras para evitar un `fsync` por evento 
 
 ## Contrato pendiente con la imagen de aplicación
 
-La configuración consume segmentos fuente inmutables `/data/analytics/spool/garmin-*.ndjson`. La imagen escribe cada lote en un nombre temporal, hace `fsync`, lo cierra y lo renombra a ese patrón; nunca vuelve a modificar un segmento visible.
+La configuración consume segmentos fuente inmutables `/data/analytics/spool/garmin-v3-*.ndjson`. La imagen agrupa hasta 10 000 eventos por segmento, escribe cada lote en un nombre temporal, hace `fsync`, lo cierra y lo renombra a ese patrón; nunca vuelve a modificar un segmento visible. El prefijo de generación permite conservar segmentos anteriores sin que Fluent Bit intente abrir miles de ficheros durante un replay coordinado.
 
 Las sondas del collector comprueban de forma segura que PID 1 existe, por lo que un backfill inicial largo no se reinicia por ausencia de checkpoint. Como mejora coordinada, la aplicación debe actualizar atómicamente `/data/analytics/state/collector.heartbeat` al inicio y durante operaciones largas; una monitorización externa puede alertar por antigüedad, sin usarla como liveness destructiva.
