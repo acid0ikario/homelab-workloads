@@ -97,7 +97,7 @@ spec:
         - name: spool
           persistentVolumeClaim: {claimName: garmin-analytics-spool}
         - name: fluent-buffer
-          persistentVolumeClaim: {claimName: garmin-fluent-bit-buffer}
+          persistentVolumeClaim: {claimName: garmin-fluent-bit-buffer-v3}
         - name: tokens
           secret: {secretName: garmin-tokens, defaultMode: 0400}
         - name: fluent-config

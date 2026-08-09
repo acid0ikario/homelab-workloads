@@ -23,6 +23,17 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
+  name: garmin-fluent-bit-buffer-v3
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
   name: garmin-elasticsearch
 spec:
   accessModes: [ReadWriteOnce]

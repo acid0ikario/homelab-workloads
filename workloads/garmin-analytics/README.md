@@ -1,6 +1,6 @@
 # Garmin analytics
 
-Stack coexistente (no reemplaza `garmin-health-dashboard`) con collector + Fluent Bit dedicado, Logstash 9.4.2, Elasticsearch 9.4.2 y Kibana 9.4.2. Los saltos durables son el PVC fuente `garmin-analytics-spool`, el PVC independiente `garmin-fluent-bit-buffer`, la persistent queue `garmin-logstash-queue` y `garmin-elasticsearch`.
+Stack coexistente (no reemplaza `garmin-health-dashboard`) con collector + Fluent Bit dedicado, Logstash 9.4.2, Elasticsearch 9.4.2 y Kibana 9.4.2. Los saltos durables activos son el PVC fuente `garmin-analytics-spool`, el PVC independiente `garmin-fluent-bit-buffer-v3`, la persistent queue `garmin-logstash-queue` y `garmin-elasticsearch`. El PVC `garmin-fluent-bit-buffer` conserva el backlog de las generaciones iniciales fallidas y no se monta ni elimina automáticamente.
 
 ## Prerrequisitos y render
 
