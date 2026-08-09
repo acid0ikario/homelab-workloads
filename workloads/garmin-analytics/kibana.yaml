@@ -47,6 +47,7 @@ spec:
           livenessProbe:
             tcpSocket: {port: http}
             periodSeconds: 30
+            timeoutSeconds: 5
           resources:
             requests: {cpu: 100m, memory: 640Mi}
             limits: {cpu: "1", memory: 1Gi}

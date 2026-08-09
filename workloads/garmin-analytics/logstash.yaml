@@ -26,7 +26,7 @@ spec:
           env:
             - {name: LS_JAVA_OPTS, value: "-Xms384m -Xmx384m"}
           ports:
-            - {name: ingest, containerPort: 5044}
+            - {name: ingest-http, containerPort: 8080}
             - {name: metrics, containerPort: 9600}
           volumeMounts:
             - name: config
@@ -46,13 +46,16 @@ spec:
           startupProbe:
             httpGet: {path: /_node/pipelines, port: metrics}
             periodSeconds: 10
+            timeoutSeconds: 5
             failureThreshold: 45
           readinessProbe:
             httpGet: {path: /_node/pipelines, port: metrics}
             periodSeconds: 10
+            timeoutSeconds: 5
           livenessProbe:
             tcpSocket: {port: metrics}
             periodSeconds: 30
+            timeoutSeconds: 5
           resources:
             requests: {cpu: 100m, memory: 640Mi}
             limits: {cpu: "1", memory: 1Gi}
@@ -76,5 +79,5 @@ metadata:
 spec:
   selector: {app.kubernetes.io/name: garmin-logstash}
   ports:
-    - {name: ingest, port: 5044, targetPort: ingest}
+    - {name: ingest-http, port: 8080, targetPort: ingest-http}
     - {name: metrics, port: 9600, targetPort: metrics}

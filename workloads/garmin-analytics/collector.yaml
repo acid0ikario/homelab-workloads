@@ -25,7 +25,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: collector
-          image: garmin-health-dashboard:local-20260808-elk1
+          image: garmin-health-dashboard:local-20260808-elk2
           imagePullPolicy: Never
           command: [python, -m, app.collector]
           env:
@@ -48,17 +48,20 @@ spec:
             capabilities: {drop: [ALL]}
           startupProbe:
             exec:
-              command: [/bin/sh, -c, "test -s /data/analytics/state/checkpoint.db"]
+              command: [python, -c, "import os; os.kill(1, 0)"]
             periodSeconds: 5
-            failureThreshold: 120
+            timeoutSeconds: 3
+            failureThreshold: 60
           readinessProbe:
             exec:
-              command: [/bin/sh, -c, "test -s /data/analytics/state/checkpoint.db"]
+              command: [python, -c, "import os; os.kill(1, 0)"]
             periodSeconds: 15
+            timeoutSeconds: 3
           livenessProbe:
             exec:
               command: [python, -c, "import os; os.kill(1, 0)"]
             periodSeconds: 30
+            timeoutSeconds: 3
           resources:
             requests: {cpu: 25m, memory: 96Mi}
             limits: {cpu: 500m, memory: 384Mi}
@@ -69,18 +72,22 @@ spec:
             - {name: metrics, containerPort: 2020}
           volumeMounts:
             - {name: spool, mountPath: /data/analytics}
+            - {name: fluent-buffer, mountPath: /data/fluent-bit}
             - {name: fluent-config, mountPath: /fluent-bit/etc, readOnly: true}
           securityContext: *restricted
           startupProbe:
             httpGet: {path: /api/v1/health, port: metrics}
             periodSeconds: 5
+            timeoutSeconds: 3
             failureThreshold: 30
           readinessProbe:
             httpGet: {path: /api/v1/health, port: metrics}
             periodSeconds: 10
+            timeoutSeconds: 3
           livenessProbe:
             httpGet: {path: /api/v1/health, port: metrics}
             periodSeconds: 30
+            timeoutSeconds: 3
           resources:
             requests: {cpu: 20m, memory: 32Mi}
             limits: {cpu: 250m, memory: 160Mi}
@@ -89,6 +96,8 @@ spec:
           persistentVolumeClaim: {claimName: garmin-data}
         - name: spool
           persistentVolumeClaim: {claimName: garmin-analytics-spool}
+        - name: fluent-buffer
+          persistentVolumeClaim: {claimName: garmin-fluent-bit-buffer}
         - name: tokens
           secret: {secretName: garmin-tokens, defaultMode: 0400}
         - name: fluent-config

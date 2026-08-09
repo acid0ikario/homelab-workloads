@@ -8,7 +8,10 @@ spec:
   policyTypes: [Ingress, Egress]
   ingress:
     - from:
-        - podSelector: {}
+        - namespaceSelector:
+            matchLabels: {kubernetes.io/metadata.name: observability}
+          podSelector:
+            matchLabels: {app.kubernetes.io/name: prometheus}
       ports:
         - {protocol: TCP, port: 2020}
   egress:
@@ -26,7 +29,7 @@ spec:
         - podSelector:
             matchLabels: {app.kubernetes.io/name: garmin-logstash}
       ports:
-        - {protocol: TCP, port: 5044}
+        - {protocol: TCP, port: 8080}
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -41,9 +44,12 @@ spec:
         - podSelector:
             matchLabels: {app.kubernetes.io/name: garmin-analytics-collector}
       ports:
-        - {protocol: TCP, port: 5044}
+        - {protocol: TCP, port: 8080}
     - from:
-        - podSelector: {}
+        - namespaceSelector:
+            matchLabels: {kubernetes.io/metadata.name: observability}
+          podSelector:
+            matchLabels: {app.kubernetes.io/name: prometheus}
       ports:
         - {protocol: TCP, port: 9600}
   egress:

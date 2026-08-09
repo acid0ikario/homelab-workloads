@@ -3,10 +3,10 @@ api.http.port: 9600
 log.level: info
 config.reload.automatic: false
 queue.type: persisted
-queue.max_bytes: 1536mb
+queue.max_bytes: 1gb
 queue.checkpoint.writes: 1
 queue.drain: true
 dead_letter_queue.enable: true
-dead_letter_queue.max_bytes: 256mb
+dead_letter_queue.max_bytes: 128mb
 path.dead_letter_queue: /usr/share/logstash/data/dead_letter_queue
 xpack.monitoring.enabled: false

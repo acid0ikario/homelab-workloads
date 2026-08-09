@@ -12,6 +12,17 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
+  name: garmin-fluent-bit-buffer
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
   name: garmin-elasticsearch
 spec:
   accessModes: [ReadWriteOnce]
@@ -29,4 +40,5 @@ spec:
   storageClassName: local-path
   resources:
     requests:
+      # 1 GiB PQ + 128 MiB DLQ leaves ample filesystem/checkpoint headroom.
       storage: 2Gi
