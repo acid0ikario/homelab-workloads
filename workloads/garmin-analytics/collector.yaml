@@ -25,7 +25,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: collector
-          image: garmin-health-dashboard:local-20260808-elk2
+          image: garmin-health-dashboard:local-20260808-elk3
           imagePullPolicy: Never
           command: [python, -m, app.collector]
           env:
